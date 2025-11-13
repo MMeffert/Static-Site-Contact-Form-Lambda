@@ -1,3 +1,6 @@
+// This is the old example code - use lambda/contact-form.ts instead
+// This file is kept for reference only
+
 var AWS = require('aws-sdk');
 var ses = new AWS.SES();
 

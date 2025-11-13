@@ -1,0 +1,10 @@
+node_modules/
+*.js
+*.d.ts
+!lambda/contact-form.ts
+!website/js/*.js
+function.zip
+response.json
+trust-policy.json
+.env
+.DS_Store
