@@ -47,4 +47,4 @@ Client Form → API Gateway (POST /contact) → Lambda → SES Email
 
 ## Cost
 
-~$0.41/month for 100 submissions (AWS free tier coverage)
+~$0.41/month for 100 submissions (AWS free tier coverage; estimate as of 2026-08)
