@@ -23,6 +23,60 @@ This repository contains everything you need to add a working contact form to yo
 
 ## Instructions for reCAPTCHA Setup
 
+reCAPTCHA remains the default when `CAPTCHA_PROVIDER` is unset. To use ALTCHA instead,
+follow the ALTCHA setup below and set `CAPTCHA_PROVIDER=altcha`.
+
+## ALTCHA Setup (Optional)
+
+The Lambda supports ALTCHA widget **2.x**, using its v1 SHA-256 proof format. It
+generates challenges at `GET /contact/challenge` and verifies the base64 `altcha`
+field on `POST /contact`. Challenges expire after five minutes. Verification uses
+the upstream `altcha-lib/v1` API, including HMAC validation; no client-supplied
+verification flag is trusted.
+
+1. Store a cryptographically random signing key in Secrets Manager as JSON:
+   `{"hmacKey":"YOUR_RANDOM_SIGNING_KEY"}`. Keep this key on the server.
+2. Create a DynamoDB table in `us-east-1` with a String partition key named
+   `challenge`. Enable TTL on its Number attribute `expires`. The Lambda uses an
+   atomic conditional put to reject reused proofs across concurrent invocations;
+   TTL removes expired records later. Choose on-demand capacity for low traffic.
+3. Give the Lambda role `secretsmanager:GetSecretValue` on that secret and
+   `dynamodb:PutItem` on that table, in addition to the existing SES permissions.
+4. Configure the Lambda environment:
+
+   | Variable | Value |
+   | --- | --- |
+   | `CAPTCHA_PROVIDER` | `altcha` |
+   | `ALTCHA_SECRET_ARN` | ARN of the signing-key secret |
+   | `ALTCHA_CHALLENGE_TABLE` | Name of the DynamoDB table |
+   | `FROM_EMAIL`, `TO_EMAIL` | Existing SES email configuration |
+
+5. Add `GET /contact/challenge` and its `OPTIONS` method to API Gateway using the
+   same Lambda proxy integration and invoke permission as `POST /contact`.
+   Deploy the API stage. Disable caching on the challenge route; responses also
+   carry `Cache-Control: no-store`. Keep the existing origin allowlist configured
+   for your website.
+6. Use `website/contact-form-altcha-example.html`, replacing `YOUR_API_GATEWAY_URL`
+   with the submission URL and `YOUR_ALTCHA_CHALLENGE_URL` with the challenge URL
+   from step 5. The example pins ALTCHA widget 2.3.0. Self-host the same widget
+   distribution if your site's content security policy restricts CDN scripts.
+
+Missing or invalid proofs, expired or replayed challenges, and secret/table failures
+prevent email delivery. ALTCHA mode never falls back after failed verification. To
+switch back during rollout, change both the Lambda provider to `recaptcha` (or unset
+it) and the frontend to `website/contact-form-example.html`, retaining the original
+`RECAPTCHA_SECRET_ARN` configuration. ALTCHA widget 3.x/v2 proofs and Sentinel server
+signatures are not accepted by this v1 integration.
+
+### Build and Test
+
+From `lambda/`, run `npm ci` followed by `npm test`. Tests cover valid, tampered,
+expired, missing, and replayed proofs, concurrent reuse, storage failure, the
+challenge round trip, legacy reCAPTCHA behavior, and frontend submission handling.
+AWS and reCAPTCHA calls are mocked; tests do not send email or deploy resources.
+
+## reCAPTCHA Configuration
+
 ### 1. Create a Google Cloud Project
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)

@@ -21,6 +21,9 @@ function submitToAPI(e) {
 
   var metaApi = document.querySelector('meta[name="contact-api"]');
   var metaSiteKey = document.querySelector('meta[name="recaptcha-site-key"]');
+  var metaProvider = document.querySelector('meta[name="captcha-provider"]');
+  var captchaProvider = metaProvider ? metaProvider.getAttribute('content') : 'recaptcha';
+  var altchaWidget = document.querySelector('altcha-widget');
   var URL = metaApi ? metaApi.getAttribute('content') : "YOUR_API_GATEWAY_URL";
   var siteKey = metaSiteKey ? metaSiteKey.getAttribute('content') : 'YOUR_RECAPTCHA_SITE_KEY';
 
@@ -34,7 +37,17 @@ function submitToAPI(e) {
     }
   }
 
-  if (window.grecaptcha && grecaptcha.enterprise && grecaptcha.enterprise.execute) {
+  if (captchaProvider === 'altcha') {
+    var proof = document.querySelector('input[name="altcha"]');
+    if (!proof || !proof.value) {
+      $("#message").css('color', 'red').text('Please complete the verification.').focus();
+      return;
+    }
+    submitWithToken(null, proof.value);
+  } else if (captchaProvider !== 'recaptcha') {
+    $("#message").css('color', 'red').text('Contact form verification is not configured.').focus();
+    return;
+  } else if (window.grecaptcha && grecaptcha.enterprise && grecaptcha.enterprise.execute) {
     grecaptcha.enterprise.ready(function() {
       grecaptcha.enterprise.execute(siteKey, {action: 'submit'}).then(function(token) {
         submitWithToken(token);
@@ -47,7 +60,7 @@ function submitToAPI(e) {
     submitWithToken(null);
   }
 
-  function submitWithToken(token) {
+  function submitWithToken(token, altchaPayload) {
     var name = $("#name").val();
     var email = $("#mail").val();
     var subject = $("#subject").val();
@@ -60,6 +73,10 @@ function submitToAPI(e) {
       message: message,
       recaptchaToken: token
     };
+    if (altchaPayload) {
+      delete data.recaptchaToken;
+      data.altcha = altchaPayload;
+    }
 
     setSending(true);
 
@@ -78,6 +95,7 @@ function submitToAPI(e) {
         document.getElementById('mail').value = '';
         document.getElementById('subject').value = '';
         document.getElementById('comment').value = '';
+        if (altchaWidget) altchaWidget.reset();
         setSending(false);
       },
       error: function (xhr, status, err) {
@@ -89,8 +107,13 @@ function submitToAPI(e) {
           // ignore
         }
         $("#message").css('color', 'red').text(errMsg).attr('tabindex', '-1').focus();
+        if (altchaWidget) altchaWidget.reset();
         setSending(false);
       }
     });
   }
 }
+
+$(function () {
+  $('#contact-form').on('submit', submitToAPI);
+});

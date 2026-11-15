@@ -7,6 +7,7 @@
     
     <!-- Configure your API endpoint and reCAPTCHA site key -->
     <meta name="contact-api" content="YOUR_API_GATEWAY_URL">
+    <meta name="captcha-provider" content="recaptcha">
     <meta name="recaptcha-site-key" content="YOUR_RECAPTCHA_SITE_KEY">
     
     <!-- Load reCAPTCHA -->
@@ -80,7 +81,7 @@
             <textarea id="comment" name="comment" rows="5" required aria-required="true"></textarea>
         </div>
         
-        <button type="button" id="contact-submit" aria-label="Send message">
+        <button type="submit" id="contact-submit" aria-label="Send message">
             Send Message
         </button>
     </form>
