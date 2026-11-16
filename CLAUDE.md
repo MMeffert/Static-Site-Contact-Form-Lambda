@@ -15,6 +15,8 @@ Serverless contact form solution for static websites.
 - Input validation (name, email, message length)
 - Email sanitization (injection prevention)
 - Google reCAPTCHA Enterprise integration
+- Opt-in ALTCHA widget 2.x/v1 proof verification (`CAPTCHA_PROVIDER=altcha`), with
+  Secrets Manager signing keys and DynamoDB conditional writes for replay protection
 - AWS SES for email delivery
 - AWS Secrets Manager for credentials
 - CORS protection with origin validation
@@ -23,6 +25,7 @@ Serverless contact form solution for static websites.
 ### Frontend
 - JavaScript form handler
 - reCAPTCHA loader
+- Separate ALTCHA example; the frontend and Lambda must use the same provider
 - Accessible HTML form with ARIA attributes
 
 ## Architecture
