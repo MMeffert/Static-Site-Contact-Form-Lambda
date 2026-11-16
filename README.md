@@ -75,6 +75,10 @@ expired, missing, and replayed proofs, concurrent reuse, storage failure, the
 challenge round trip, legacy reCAPTCHA behavior, and frontend submission handling.
 AWS and reCAPTCHA calls are mocked; tests do not send email or deploy resources.
 
+Email subjects must be strings of at most 200 characters without control
+characters (including carriage returns, line feeds, and null bytes). Invalid
+subjects are rejected before CAPTCHA verification or email delivery.
+
 ## reCAPTCHA Configuration
 
 ### 1. Create a Google Cloud Project

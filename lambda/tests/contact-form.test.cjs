@@ -184,3 +184,25 @@ test('unsupported request methods do not send email', async () => {
   assert.equal((await handler({ httpMethod: 'GET', path: '/other', headers: {} })).statusCode, 405);
   assert.equal(sends.length + secrets.length + writes.length, 0);
 });
+
+for (const [name, subject] of [
+  ['CRLF', 'Question\r\nBcc: other@example.com'],
+  ['line feed', 'Question\nSecond line'],
+  ['null byte', 'Question\0'],
+  ['non-string', { text: 'Question' }],
+  ['overlong', 'x'.repeat(201)],
+]) {
+  test(`rejects ${name} subject before verification or email delivery`, async () => {
+    const response = await handler(event(encode(proof()), { subject }));
+    assert.equal(response.statusCode, 400);
+    assert.equal(JSON.parse(response.body).message, 'Invalid subject');
+    assert.equal(secrets.length + writes.length + sends.length, 0);
+  });
+}
+
+test('a valid Unicode subject within the length limit is delivered intact', async () => {
+  const subject = 'Résumé: ' + 'é'.repeat(192);
+  assert.equal(subject.length, 200);
+  assert.equal((await handler(event(encode(proof()), { subject }))).statusCode, 200);
+  assert.equal(sends[0].Message.Subject.Data, 'Contact Form: ' + subject);
+});

@@ -207,6 +207,14 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       };
     }
 
+    if (typeof subject !== 'string' || subject.length > 200 || /[\u0000-\u001f\u007f]/.test(subject)) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ message: 'Invalid subject' }),
+      };
+    }
+
     if (captchaProvider === 'altcha') {
       if (!await verifyAltcha(altcha)) {
         return {
